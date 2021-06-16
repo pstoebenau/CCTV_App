@@ -1,7 +1,7 @@
 import fs, { readdirSync, write } from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
-import '@tensorflow/tfjs-node';
+import '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { Canvas, Image } from 'canvas';
 // import * as faceapi from 'face-api.js';
