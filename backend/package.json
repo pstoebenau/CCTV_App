@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.2",
-    "@tensorflow/tfjs": "^3.7.0",
+    "@tensorflow/tfjs-node": "^3.7.0",
     "canvas": "^2.8.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
