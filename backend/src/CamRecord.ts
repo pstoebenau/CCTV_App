@@ -1,7 +1,7 @@
 import fs, { readdirSync, write } from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
-import '@tensorflow/tfjs';
+import '@tensorflow/tfjs-node';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { Canvas, Image } from 'canvas';
 // import * as faceapi from 'face-api.js';
@@ -16,7 +16,7 @@ export default class CamRecord {
   name: string;
   camURL: string;
   verbose: number = 1;
-  detectFps: number = 1;
+  detectFps: number = 0.2;
   imageCache: number = 30;
   recordPadding: number = 5;
 
@@ -143,6 +143,7 @@ export default class CamRecord {
     if (this.verbose > 0) console.log('Length of video: ' + end.diff(start, 's'));
 
     const images = readdirSync(this.imagePath);
+    console.log(images);
 
     // Sort in chronological order
     images.sort((a: string, b: string) => {
@@ -155,21 +156,21 @@ export default class CamRecord {
     let imageTime;
     let prevImageTime = start;
     let numInputs = 0;
-    fs.writeFileSync(imageInputsFile, '');
+    let str = '';
     images.map((image, i) => {
       imageTime = moment(image.replace('.jpg', ''), 'x');
       if (imageTime.isAfter(start) && imageTime.isBefore(end)) {
         if (numInputs !== 0) {
-          fs.appendFileSync(
-            imageInputsFile,
-            'duration ' + imageTime.diff(prevImageTime, 'ms') / 1000 + '\n'
-          );
+          str += 'duration ' + imageTime.diff(prevImageTime, 'ms') / 1000 + '\n';
         }
-        fs.appendFileSync(imageInputsFile, `file ${path.join(this.imagePath, image)}\n`);
+        str += `file ${path.join(this.imagePath, image)}\n`;
         prevImageTime = imageTime;
         numInputs++;
       }
     });
+    fs.writeFileSync(imageInputsFile, str);
+
+    if (this.verbose > 0) console.log('Input file content: ' + str);
 
     const videoPath = path.join(
       config.dir.recordings,
