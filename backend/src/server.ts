@@ -44,5 +44,5 @@ httpServer.listen(config.server.port, () =>
 );
 
 // Run background app
-const camRecord = new CamRecord('room', 'http://192.168.1.13:8080');
+const camRecord = new CamRecord('room', 'http://192.168.1.70:8080');
 camRecord.record();
