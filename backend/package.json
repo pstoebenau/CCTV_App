@@ -21,11 +21,11 @@
   },
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.2",
-    "@tensorflow/tfjs-node": "^3.7.0",
+    "@tensorflow/tfjs": "^3.6.1",
+    "@tensorflow/tfjs-node": "^3.6.1",
     "canvas": "^2.8.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "face-api.js": "^0.20.0",
     "file-on-write": "^1.1.1",
     "fluent-ffmpeg": "^2.1.2",
     "mjpeg-camera": "^2.0.0",

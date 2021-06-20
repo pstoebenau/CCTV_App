@@ -1,7 +1,7 @@
 import fs, { readdirSync, write } from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
-import '@tensorflow/tfjs-node';
+import '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { Canvas, Image } from 'canvas';
 // import * as faceapi from 'face-api.js';
@@ -40,10 +40,10 @@ export default class CamRecord {
   }
 
   async record() {
-    if (!this.model) this.model = await cocoSsd.load();
     if (!this.camera) this.downloadVideoStream();
-    this.recordInterval = setInterval(() => this.detectPeople(), 1000 / this.detectFps);
     this.deleteInterval = setInterval(() => this.removeOldImages(), 1000);
+    if (!this.model) this.model = await cocoSsd.load();
+    this.recordInterval = setInterval(() => this.detectPeople(), 1000 / this.detectFps);
   }
 
   stop() {
@@ -86,16 +86,18 @@ export default class CamRecord {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
+    if (this.verbose > 0) console.log('Trigger!');
+    this.saveVideo(now);
     // Person detection
-    const detections = await this.model.detect(canvas as any);
+    // const detections = await this.model.detect(canvas as any);
 
-    for (let object of detections) {
-      if (object.class == 'person') {
-        if (this.verbose > 0) console.log('Person Detected!');
-        this.saveVideo(now);
-        break;
-      }
-    }
+    // for (let object of detections) {
+    //   if (object.class == 'person') {
+    //     if (this.verbose > 0) console.log('Person Detected!');
+    //     this.saveVideo(now);
+    //     break;
+    //   }
+    // }
 
     // Save video if it's been a while since last detection
     if (
@@ -143,7 +145,6 @@ export default class CamRecord {
     if (this.verbose > 0) console.log('Length of video: ' + end.diff(start, 's'));
 
     const images = readdirSync(this.imagePath);
-    console.log(images);
 
     // Sort in chronological order
     images.sort((a: string, b: string) => {
@@ -170,7 +171,7 @@ export default class CamRecord {
     });
     fs.writeFileSync(imageInputsFile, str);
 
-    if (this.verbose > 0) console.log('Input file content: ' + str);
+    // if (this.verbose > 0) console.log('Input file content: ' + str);
 
     const videoPath = path.join(
       config.dir.recordings,
