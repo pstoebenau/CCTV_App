@@ -1,7 +1,7 @@
 import fs, { readdirSync, write } from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
-import '@tensorflow/tfjs';
+import '@tensorflow/tfjs-node';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { Canvas, Image } from 'canvas';
 // import * as faceapi from 'face-api.js';
@@ -56,6 +56,13 @@ export default class CamRecord {
     this.verbose = verbose;
   }
 
+  getData() {
+    return {
+      name: this.name,
+      camUrl: this.camURL,
+    };
+  }
+
   private streamError() {
     if (this.camera.connection == null) return;
 
@@ -86,18 +93,16 @@ export default class CamRecord {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
 
-    if (this.verbose > 0) console.log('Trigger!');
-    this.saveVideo(now);
     // Person detection
-    // const detections = await this.model.detect(canvas as any);
+    const detections = await this.model.detect(canvas as any);
 
-    // for (let object of detections) {
-    //   if (object.class == 'person') {
-    //     if (this.verbose > 0) console.log('Person Detected!');
-    //     this.saveVideo(now);
-    //     break;
-    //   }
-    // }
+    for (let object of detections) {
+      if (object.class == 'person') {
+        if (this.verbose > 0) console.log('Person Detected!');
+        this.saveVideo(now);
+        break;
+      }
+    }
 
     // Save video if it's been a while since last detection
     if (
