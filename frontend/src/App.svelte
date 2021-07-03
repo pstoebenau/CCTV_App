@@ -1,114 +1,61 @@
 <main>
+	<Navbar on:addCamera={addCamera}></Navbar>
 	<div class="container">
-		<div class="img-container">
-			<div class="canvas-overlay">
-				<canvas bind:this={canvas} width="1920" height="1080"></canvas>
-				<img bind:this={imgEl} src="http://192.168.1.5:8080/?action=stream" alt="stream" crossorigin="Anonymous"/>
-			</div>
-		</div>
-		<div class="controls">
-			<Button variant='raised'>
-				<Label>On</Label>
-			</Button>
-			<Button variant='raised'>
-				<Label>Off</Label>
-			</Button>
-		</div>
+		{#each cameras as camera}
+			<CameraPreview camera={camera}></CameraPreview>
+		{/each}
 	</div>
 </main>
 
 <script lang="ts">
-	import Button, { Label } from '@smui/button';
-	import { onMount } from 'svelte';
-	import * as tf from '@tensorflow/tfjs';
-	import cocoSsd, { ObjectDetection, DetectedObject } from "@tensorflow-models/coco-ssd";
-	// import * as faceapi from 'face-api.js';
+	import CameraPreview from './components/CameraPreview.svelte';
+	import Navbar from './components/Navbar.svelte';
+	import config from './config/config';
+	import type Camera from './models/Camera';
 
-	let imgEl: HTMLImageElement;
-	let canvas: HTMLCanvasElement;
-	let ctx: CanvasRenderingContext2D;
-	let model: ObjectDetection;
+	let cameras: Camera[] = [];
 
-	onMount(async () => {
-		ctx = canvas.getContext('2d');
+	(async () => {
+		const response = await fetch(`${config.API}/camera/get-all`);
+		const obj = await response.json();
+		cameras = obj.cameras;
+	})();
 
-		await loadModels();
+	async function addCamera(event) {
+		const response = await fetch(`${config.API}/camera/create`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(event.detail)
+		});
+		const obj = await response.json();
 
-		setInterval(updatePredictions, 1000);
-	});
-
-	async function loadModels() {
-		// Load model
-		model = await cocoSsd.load()
-	}
-
-	async function updatePredictions() {
-		// Person detection
-		const detections = await model.detect(imgEl);
-
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		drawBoxes(detections);
-	}
-
-	function drawBoxes(detections: DetectedObject[]) {
-		for (let object of detections) {
-			if (object.class == "person") {
-				let scale = imgEl.naturalWidth / imgEl.width;
-				const bbox = object.bbox.map(x => x * scale);
-				ctx.beginPath();
-				ctx.rect(bbox[0], bbox[1], bbox[2], bbox[3]);
-				ctx.stroke();
-				ctx.closePath();
-			}
+		if (obj.status == 'success') {
+			cameras = [...cameras, obj.camera];
+		}
+		else {
+			console.log(obj);
 		}
 	}
 </script>
 
-<style type="text/scss">
+<style type="text/scss" scoped>
+	@use "./theme/_smui-theme";
+
 	main {
+		display: flex;
+		flex-direction: column;
 		padding: 0;
 		margin: 0;
 	}
 
 	.container {
-		display: grid;
-		grid-template-columns: 9fr 1fr;
-		grid-template-rows: 100vh;
-		justify-content: space-around;
+		flex: 1;
+		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		height: 100vh;
-
-		.img-container {
-			align-self: stretch;
-			display: flex;
-			align-items: center;
-			
-			.canvas-overlay {
-				position: relative;
-				height: fit-content;
-			
-				img, canvas {
-					max-width: 100%;
-					max-height: 100%;
-					object-fit: contain;
-				}
-
-				canvas {
-					position: absolute;
-					top: 0;
-					left: 0;
-					z-index: 99;
-				}
-			}
-		}
-
-		.controls {
-			display: flex;
-			justify-content: space-around;
-			flex-direction: column;
-			align-self: stretch;
-			padding: 0 20px;
-		}
+		margin: 0 20px;
+		gap: 20px;
 	}
-
 </style>
