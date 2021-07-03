@@ -1,0 +1,22 @@
+version: "3.3"
+services:
+  rest-api:
+    build: backend
+    command: bash -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./backend:/usr/app/backend"
+  web:
+    build: frontend
+    command: bash -c "npm install && npm run dev"
+    ports:
+      - "5000:5000"
+    volumes:
+      - "./frontend:/usr/app/frontend"
+  # Didn't test this
+  jetson-api:
+    build: jetson-api
+    command: python3 app.py
+    volumes:
+      - "./jetson-api:/usr/app/jetson-api"
