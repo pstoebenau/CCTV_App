@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, jsonify, request
+import json
 from detectnet import detect
 
 app = Flask(__name__)
@@ -7,9 +8,10 @@ app = Flask(__name__)
 def home():
   return "Wohooo!"
 
-@app.route("/detect/<img>")
-def detection(img):
-  return detect(img)
+@app.route("/detect", methods=[ 'POST' ])
+def detection():
+  data = json.loads(request.data)
+  return jsonify(detect(data['image']))
 
 if __name__ == "__main__":
-  app.run(host='0.0.0.0')
+  app.run()

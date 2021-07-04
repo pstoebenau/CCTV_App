@@ -4,6 +4,7 @@ import config from '@/config/config';
 import CamRecord from '@/CamRecord';
 import recordingsRoutes from '@/routes/recordings';
 import cameraRoutes from '@/routes/camera';
+import { exec } from 'child_process';
 
 const router = express();
 
@@ -42,3 +43,6 @@ const httpServer = http.createServer(router);
 httpServer.listen(config.server.port, () =>
   console.log(`Server is running on ${config.server.hostname}:${config.server.port}`)
 );
+
+let camera = new CamRecord('room', 'http://192.168.1.70:8080');
+camera.record();

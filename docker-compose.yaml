@@ -15,8 +15,8 @@ services:
     volumes:
       - "./frontend:/usr/app/frontend"
   # Didn't test this
-  jetson-api:
-    build: jetson-api
-    command: python3 app.py
-    volumes:
-      - "./jetson-api:/usr/app/jetson-api"
+  # jetson-api:
+  #   build: jetson-api
+  #   command: python3 app.py
+  #   volumes:
+  #     - "./jetson-api:/usr/app/jetson-api"

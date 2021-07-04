@@ -1,3 +1,5 @@
+import moment from "moment";
+
 export function timeoutPromise<Type>(ms: number, promise: Promise<Type>) {
   return new Promise<Type>((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -14,4 +16,8 @@ export function timeoutPromise<Type>(ms: number, promise: Promise<Type>) {
       }
     );
   })
+}
+
+export function momentFromFileName(fileName: string) {
+  return moment(fileName.split('.')[0], 'x');
 }

@@ -1,30 +1,25 @@
 import fs, { readdirSync, write } from 'fs';
 import path from 'path';
-import fetch from 'node-fetch';
-import '@tensorflow/tfjs-node';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import { Canvas, Image } from 'canvas';
-// import * as faceapi from 'face-api.js';
+import axios from 'axios';
 import moment from 'moment';
 import MjpegCamera from 'mjpeg-camera';
 import FileOnWrite from 'file-on-write';
 import ffmpeg from 'fluent-ffmpeg';
 import config from '@/config/config';
-import { timeoutPromise } from './functions/functions';
+import * as func from './functions/functions';
 
 export default class CamRecord {
   name: string;
   camURL: string;
   verbose: number = 1;
-  detectFps: number = 0.2;
-  imageCache: number = 30;
+  detectFps: number = 1;
+  imageCache: number = 60;
   recordPadding: number = 5;
 
   recordInterval: NodeJS.Timeout;
   deleteInterval: NodeJS.Timeout;
   firstDetection: moment.Moment = moment(0);
   lastDetection: moment.Moment = moment(0);
-  model: cocoSsd.ObjectDetection | null = null;
   camera: any;
   imagePath: string;
   recordingPath: string;
@@ -35,6 +30,7 @@ export default class CamRecord {
     this.recordInterval = setInterval(() => {});
     this.deleteInterval = setInterval(() => {});
     this.imagePath = path.join(config.dir.image, this.name);
+    if (!fs.existsSync(this.imagePath)) fs.mkdirSync(this.imagePath);
     this.recordingPath = path.join(config.dir.recordings, this.name);
     if (!fs.existsSync(this.recordingPath)) fs.mkdirSync(this.recordingPath);
   }
@@ -42,7 +38,6 @@ export default class CamRecord {
   async record() {
     if (!this.camera) this.downloadVideoStream();
     this.deleteInterval = setInterval(() => this.removeOldImages(), 1000);
-    if (!this.model) this.model = await cocoSsd.load();
     this.recordInterval = setInterval(() => this.detectPeople(), 1000 / this.detectFps);
   }
 
@@ -72,37 +67,38 @@ export default class CamRecord {
   }
 
   private async detectPeople() {
-    if (!this.model) {
-      return;
-    }
-
-    const now = moment();
-    let response, buffer;
-    try {
-      response = await timeoutPromise(1000, fetch(`${this.camURL}/?action=snapshot`));
-      buffer = await response.buffer();
-    } catch (error) {
-      if (this.verbose > 1) console.log(error);
-      this.streamError();
-      return;
-    }
-
-    const img = new Image();
-    img.src = buffer;
-    const canvas = new Canvas(img.naturalWidth, img.naturalHeight);
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-
-    // Person detection
-    const detections = await this.model.detect(canvas as any);
-
-    for (let object of detections) {
-      if (object.class == 'person') {
-        if (this.verbose > 0) console.log('Person Detected!');
-        this.saveVideo(now);
-        break;
+    let lastImage = '0';
+    const images = readdirSync(this.imagePath);
+    for (const image of images) {
+      if (func.momentFromFileName(image).isAfter(func.momentFromFileName(lastImage))) {
+        lastImage = image;
       }
     }
+    const now = func.momentFromFileName(lastImage);
+
+    if (lastImage == '0') {
+      if (this.verbose >= 1) console.log('No images in buffer!');
+      return;
+    }
+    
+    // Person detection
+    try {
+      const imagePath = path.join(this.imagePath, lastImage);
+      const response = await axios.post(`${config.server.jetsonApi}/detect`, { image: imagePath });
+      const detections = response.data;
+
+      for (let detection of detections) {
+        if (detection.class == 'person') {
+          if (this.verbose > 0) console.log('Person Detected!');
+          this.saveVideo(now);
+          break;
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+
 
     // Save video if it's been a while since last detection
     if (
@@ -153,9 +149,9 @@ export default class CamRecord {
 
     // Sort in chronological order
     images.sort((a: string, b: string) => {
-      const timeA = parseInt(a.replace('.jpg', ''));
-      const timeB = parseInt(b.replace('.jpg', ''));
-      return timeA - timeB;
+      const timeA = func.momentFromFileName(a);
+      const timeB = func.momentFromFileName(b);
+      return timeA.diff(timeB);
     });
 
     const imageInputsFile = path.join(this.recordingPath, `${start.format('x')}-input.txt`);
@@ -164,7 +160,7 @@ export default class CamRecord {
     let numInputs = 0;
     let str = '';
     images.map((image, i) => {
-      imageTime = moment(image.replace('.jpg', ''), 'x');
+      imageTime = func.momentFromFileName(image);
       if (imageTime.isAfter(start) && imageTime.isBefore(end)) {
         if (numInputs !== 0) {
           str += 'duration ' + imageTime.diff(prevImageTime, 'ms') / 1000 + '\n';
@@ -211,13 +207,13 @@ export default class CamRecord {
       });
 
       this.camera = new MjpegCamera({
-        url: `${this.camURL}/?action=stream`,
+        url: `${this.camURL}?action=stream`,
       });
 
       this.camera.pipe(fileWriter);
       this.camera.start();
 
-      if (this.verbose > 0) console.log('Recording!');
+      if (this.verbose > 0) console.log(`Recording ${this.camURL}?action=stream!`);
     } catch (error) {
       if (this.verbose > 1) console.log(error);
       return;

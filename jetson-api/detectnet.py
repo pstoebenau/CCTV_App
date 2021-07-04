@@ -25,4 +25,4 @@ def detect(img):
 			'center': detection.Center,
 		})
 
-	return json.dumps(retval)
+	return retval
