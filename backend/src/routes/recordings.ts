@@ -2,6 +2,7 @@ import express from 'express';
 import config from '@/config/config';
 import fs, { createReadStream } from 'fs';
 import path from 'path';
+import * as func from '@/functions/functions';
 
 const router = express.Router();
 
@@ -30,9 +31,11 @@ router.get('/list/:camera', (req, res, next) => {
   }
 });
 
-router.get('/get/:camera/:filename', (req, res, next) => {
+router.get('/get/:camera/:filename', async (req, res, next) => {
   try {
-    const videoDir = path.join(config.dir.recordings, req.params.camera, req.params.filename);
+    let videoDir = path.join(config.dir.recordings, req.params.camera, req.params.filename);
+    videoDir = await func.checkAndConvertImgSeq(videoDir);
+
     const videoSize = fs.statSync(videoDir).size;
 
     res.writeHead(200, {
@@ -47,14 +50,16 @@ router.get('/get/:camera/:filename', (req, res, next) => {
   }
 });
 
-router.get('/stream/:camera/:filename', (req, res, next) => {
+router.get('/stream/:camera/:filename', async (req, res, next) => {
   try {
     const range = req.headers.range;
     if (!range) {
       return res.status(400).json({ error: 'Requires range header!' });
     }
 
-    const videoDir = path.join(config.dir.recordings, req.params.camera, req.params.filename);
+    let videoDir = path.join(config.dir.recordings, req.params.camera, req.params.filename);
+    videoDir = await func.checkAndConvertImgSeq(videoDir);
+
     const videoSize = fs.statSync(videoDir).size;
 
     // Parse range

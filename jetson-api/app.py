@@ -11,7 +11,9 @@ def home():
 @app.route("/detect", methods=[ 'POST' ])
 def detection():
   data = json.loads(request.data)
-  return jsonify(detect(data['image']))
+  retval = detect(data['image'])
+  print(retval)
+  return jsonify(retval)
 
 if __name__ == "__main__":
   app.run()
