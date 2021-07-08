@@ -25,7 +25,7 @@ router.get('/list/:camera', (req, res, next) => {
       });
     });
 
-    return res.status(200).json(retval);
+    return res.status(200).json({ status: 'success', recordings: retval });
   } catch (error) {
     console.log(error);
   }

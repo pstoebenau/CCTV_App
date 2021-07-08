@@ -1,20 +1,27 @@
 <div bind:this={container} class="container">
   <img src={`${camera.camUrl}/?action=stream`} alt="mjpeg stream">
   <div bind:this={controls} class='controls'>
-    <Button variant="raised" style="flex: 1"><Label>Edit</Label></Button>
-    <Button variant="raised" style="flex: 1"><Label>Record</Label></Button>
+    <Button on:click={push(`/recordings/${camera.name}`)} variant="raised" style="flex: 1"><Label>Recordings</Label></Button>
+    <Button on:click={deleteCamera} variant="raised" style="flex: 1"><Label>Delete</Label></Button>
   </div>
 </div>
 
 <script lang="ts">
 	import Button, { Label } from '@smui/button';
-  import { onMount } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import type Camera from '../models/Camera';
+  import { push } from 'svelte-spa-router';
 
   export let camera: Camera;
 
   let container: HTMLDivElement;
   let controls: HTMLDivElement;
+
+  const dispatch = createEventDispatcher();
+
+  function deleteCamera() {
+    dispatch('deleteCamera', { name: camera.name });
+  }
 
   onMount(() => {
     container.addEventListener('mouseover', () => controls.style.opacity = '1');

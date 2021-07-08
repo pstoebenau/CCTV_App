@@ -52,6 +52,9 @@ export async function convertJPG2MP4(imagePath: string) {
   let str = '';
   let prevImageTime = momentFromFileName(images[0]);
   images.map((image, i) => {
+    if (image == 'input.txt')
+      return;
+
     imageTime = momentFromFileName(image);
     if (numInputs !== 0) {
       str += 'duration ' + imageTime.diff(prevImageTime, 'ms') / 1000 + '\n';
@@ -63,11 +66,14 @@ export async function convertJPG2MP4(imagePath: string) {
   fs.writeFileSync(imageInputsFile, str);
 
   const videoPath = path.join(savePath, outName);
+  console.log(videoPath);
+  
   await new Promise<void>((resolve, reject) => {
     ffmpeg()
     .addInput(imageInputsFile)
     .inputFormat('concat')
     .inputOptions('-safe 0')
+    .outputOptions('-c:v h264_nvmpi')
     .output(videoPath)
     .on('start', (commandLine) => {
       console.log(commandLine);

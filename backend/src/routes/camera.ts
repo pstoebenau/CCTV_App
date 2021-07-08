@@ -8,6 +8,11 @@ const router = express.Router();
 
 let cameras: Map<string, CamRecord> = new Map();
 
+let camera = new CamRecord('room', 'http://192.168.1.70:8080');
+camera.record();
+
+cameras.set(camera.name, camera);
+
 router.get('/get-all', (req, res, next) => {
   try {
     let retval: any[] = [];
@@ -35,12 +40,28 @@ router.post('/create', (req, res, next) => {
     if (!fs.existsSync(imgDir))
       fs.mkdirSync(imgDir);
     if (!fs.existsSync(recordingsDir))
-      fs.mkdirSync(recordingsDir);
-
+    fs.mkdirSync(recordingsDir);
+    
     let camera = new CamRecord(camData.name, camData.camUrl);
     cameras.set(camData.name, camera);
-
+    
     return res.status(200).json({ status: "success", camera: camera.getData() });
+  } catch (error) {
+    return res.status(200).json({ status: "error", message: error });
+  }
+});
+
+router.post('/delete', (req, res, next) => {
+  try {
+    const camera = cameras.get(req.body.name);
+    if (camera) {
+      camera.stop();
+      cameras.delete(req.body.name);
+      return res.status(200).json({ status: "success" });
+    }
+    else {
+      return res.status(200).json({ status: "error", message: "No camera with that name" });
+    }
   } catch (error) {
     return res.status(200).json({ status: "error", message: error });
   }
@@ -66,22 +87,6 @@ router.get('/stop/:name', (req, res, next) => {
     const camera = cameras.get(req.body.name);
     if (camera) {
       camera.stop();
-      return res.status(200).json({ status: "success" });
-    }
-    else {
-      return res.status(200).json({ status: "error", message: "No camera with that name" });
-    }
-  } catch (error) {
-    return res.status(200).json({ status: "error", message: error });
-  }
-});
-
-router.get('/delete/:name', (req, res, next) => {
-  try {
-    const camera = cameras.get(req.body.name);
-    if (camera) {
-      camera.stop();
-      cameras.delete(req.body.name);
       return res.status(200).json({ status: "success" });
     }
     else {

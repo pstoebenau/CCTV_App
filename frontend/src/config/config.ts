@@ -1,5 +1,5 @@
 const config = {
-  API: 'http://localhost:3000',
+  API: 'http://apollo:3000',
 };
 
 export default config;

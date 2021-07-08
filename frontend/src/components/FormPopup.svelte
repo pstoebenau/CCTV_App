@@ -1,16 +1,24 @@
-<div bind:this={backdrop} class="backdrop">
+<div bind:this={backdrop} class="backdrop" style='display: none;'>
   <div bind:this={container} class="container">
-    
+    <h2>Add a Camera</h2>
+    <Textfield style="width: 100%;" variant="outlined" bind:value={camName} label="Camera Name"/>
+    <Textfield style="width: 100%;" variant="outlined" bind:value={camUrl} label="Camera URL"/>
+    <Button style="width: 200px;" variant="raised" on:click={addCamera}><Label>Add</Label></Button>
   </div>
 </div>
 
 <script lang="ts">
-import { onMount } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
+  import Textfield from '@smui/textfield';
+  import Button, { Label } from '@smui/button';
 
   import type Form from '../models/Form';
 
   let backdrop: HTMLDivElement;
   let container: HTMLDivElement;
+  
+  let camName: string = '';
+  let camUrl: string = '';
 
   export let form: Form;
   export const formPopup = {
@@ -25,30 +33,30 @@ import { onMount } from 'svelte';
     }
   }
 
-  onMount(() => {
-    backdrop.addEventListener('click', () => formPopup.toggle());
-  });
+  const dispatch = createEventDispatcher();
+
+  function addCamera() {
+    formPopup.toggle();
+    dispatch('addCamera', {
+			name: camName,
+			camUrl: camUrl,
+		});
+  }
 </script>
 
 <style type="text/scss" scoped>
-  .backdrop {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.4);
-  }
-
   .container {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: var(--mdc-theme-background);
+    background: var(--mdc-theme-surface);
     display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
     width: 500px;
-    height: 500px;
+    padding: 50px;
+    gap: 50px;
   }
 </style>

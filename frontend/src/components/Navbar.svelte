@@ -1,7 +1,7 @@
 <div class="container">
   <Button variant="raised" on:click={showForm}><Label>Add Camera</Label></Button>
 </div>
-<FormPopup bind:formPopup={formPopup} form={form}></FormPopup>
+<FormPopup bind:formPopup={formPopup} on:addCamera form={form}></FormPopup>
 
 <script lang="ts">
 	import Button, { Label } from '@smui/button';
@@ -9,7 +9,6 @@
 	import type Form from '../models/Form';
 	import FormPopup from './FormPopup.svelte';
 
-	const dispatch = createEventDispatcher();
 	const form: Form = {
 		title: 'Add Camera',
 		inputs: [
@@ -20,10 +19,6 @@
 	let formPopup;
 
 	function showForm() {
-		// dispatch('addCamera', {
-		// 	name: 'room',
-		// 	camUrl: 'http://192.168.1.70:8080',
-		// });
 		formPopup.toggle();
 	}
 </script>

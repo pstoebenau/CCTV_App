@@ -43,6 +43,3 @@ const httpServer = http.createServer(router);
 httpServer.listen(config.server.port, () =>
   console.log(`Server is running on ${config.server.hostname}:${config.server.port}`)
 );
-
-let camera = new CamRecord('room', 'http://192.168.1.70:8080');
-camera.record();
