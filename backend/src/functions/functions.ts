@@ -26,18 +26,27 @@ export function momentFromFileName(fileName: string) {
   return moment(fileName.split('.')[0], 'x');
 }
 
-export async function checkAndConvertImgSeq(path: string) {
-  if (fs.lstatSync(path).isFile())
-    return path;
+export async function checkAndConvertImgSeq(imgSeqPath: string) {
+  if (!fs.existsSync(imgSeqPath))
+    imgSeqPath = imgSeqPath + '.mp4';
+
+  if (fs.lstatSync(imgSeqPath).isFile())
+    return imgSeqPath;
+
+  const thumbnail = getThumbnail(imgSeqPath);
+  fs.copyFileSync(
+    path.join(imgSeqPath, thumbnail),
+    path.join(imgSeqPath, '..', path.basename(imgSeqPath) + '.jpg')
+  );
   
-  return await convertJPG2MP4(path);
+  return await convertJPG2MP4(imgSeqPath);
 }
 
-export async function convertJPG2MP4(imagePath: string) {
-  const savePath = imagePath.replace(path.basename(imagePath), '');
-  const outName = `${path.basename(imagePath)}.mp4`;
+export async function convertJPG2MP4(imageSeqPath: string) {
+  const savePath = imageSeqPath.replace(path.basename(imageSeqPath), '');
+  const outName = `${path.basename(imageSeqPath)}.mp4`;
 
-  const images = fs.readdirSync(imagePath);
+  const images = fs.readdirSync(imageSeqPath);
 
   // Sort in chronological order
   images.sort((a: string, b: string) => {
@@ -46,7 +55,7 @@ export async function convertJPG2MP4(imagePath: string) {
     return timeA.diff(timeB);
   });
 
-  const imageInputsFile = path.join(imagePath, 'input.txt');
+  const imageInputsFile = path.join(imageSeqPath, 'input.txt');
   let imageTime;
   let numInputs = 0;
   let str = '';
@@ -59,7 +68,7 @@ export async function convertJPG2MP4(imagePath: string) {
     if (numInputs !== 0) {
       str += 'duration ' + imageTime.diff(prevImageTime, 'ms') / 1000 + '\n';
     }
-    str += `file ${path.join(imagePath, image)}\n`;
+    str += `file ${path.join(imageSeqPath, image)}\n`;
     prevImageTime = imageTime;
     numInputs++;
   });
@@ -81,11 +90,25 @@ export async function convertJPG2MP4(imagePath: string) {
     .on('error', (err, stdout, stderr) => {
     })
     .on('end', (stdout, stderr) => {
-      fs.rmSync(imagePath, { recursive: true, force: true });
+      fs.rmSync(imageSeqPath, { recursive: true, force: true });
       resolve();
     })
     .run()
   });
 
   return path.join(savePath, outName);
+}
+
+export function getThumbnail(imgSeqPath: string) {
+  const recordings = fs.readdirSync(imgSeqPath);
+
+  const recordingsData = recordings.map((val) => { return {
+    start: momentFromFileName(val.split('.')[0].split('-')[0]),
+    name: val,
+  }});
+
+  recordingsData.sort((a: any, b: any) => a.start.diff(b.start))
+  const thumbnail = recordingsData[Math.floor(recordingsData.length / 2)].name;
+
+  return thumbnail;
 }

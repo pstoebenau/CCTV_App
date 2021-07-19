@@ -16,6 +16,7 @@
     "@types/fluent-ffmpeg": "^2.1.17",
     "@types/node": "^15.12.2",
     "@types/node-fetch": "^2.5.10",
+    "@types/serve-index": "^1.9.1",
     "ts-node-dev": "^1.1.6",
     "tsconfig-paths": "^3.9.0",
     "typescript": "^4.3.2"
@@ -29,6 +30,7 @@
     "file-on-write": "^1.1.1",
     "fluent-ffmpeg": "^2.1.2",
     "mjpeg-camera": "^2.0.0",
-    "moment": "^2.29.1"
+    "moment": "^2.29.1",
+    "serve-index": "^1.9.1"
   }
 }

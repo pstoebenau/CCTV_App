@@ -4,8 +4,10 @@ import path from 'path';
 dotenv.config();
 
 const SERVER = {
-  hostname: process.env.SERVER_HOSTNAME || 'localhost',
+  httpSchema: 'http',
+  hostname: process.env.SERVER_HOSTNAME || 'apollo',
   port: process.env.SERVER_PORT || '3000',
+  get url() { return `${this.httpSchema}://${this.hostname}:${this.port}` },
   jetsonApi: process.env.JESTON_API || 'http://localhost:5000',
 };
 

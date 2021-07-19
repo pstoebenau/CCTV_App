@@ -5,6 +5,7 @@ import CamRecord from '@/CamRecord';
 import recordingsRoutes from '@/routes/recordings';
 import cameraRoutes from '@/routes/camera';
 import { exec } from 'child_process';
+import serveIndex from 'serve-index';
 
 const router = express();
 
@@ -24,6 +25,9 @@ router.use((req, res, next) => {
 
   next();
 });
+
+// Static Files
+router.use('/assets', express.static(__dirname + '/../recordings'));
 
 // Routes
 router.use('/recordings', recordingsRoutes);
